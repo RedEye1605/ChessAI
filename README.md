@@ -94,40 +94,43 @@ sudo apt-get install stockfish
 
 ```bash
 # Training dengan konfigurasi default
-python train.py
+python scripts/train.py
 
 # Training dengan konfigurasi custom
-python train.py --config config/custom.yaml
+python scripts/train.py --config config/custom.yaml
 
 # Training dengan GPU
-python train.py --device cuda
+python scripts/train.py --device cuda
+
+# Training v27 (latest version)
+python scripts/train_v27.py
 ```
 
 ### Evaluasi
 
 ```bash
 # Evaluasi model
-python evaluate.py --checkpoint checkpoints/best_model.pt
+python scripts/evaluate.py --checkpoint checkpoints/chess_v27_final.pt
 
 # Evaluasi melawan Stockfish
-python evaluate.py --checkpoint checkpoints/best_model.pt --stockfish
+python scripts/evaluate.py --checkpoint checkpoints/chess_v27_final.pt --stockfish
 ```
 
 ### Bermain Melawan AI
 
 ```bash
 # Mode interaktif di terminal
-python play.py --checkpoint checkpoints/best_model.pt
+python scripts/play.py --checkpoint checkpoints/chess_v27_final.pt
 
 # Mode visual (web interface)
-python play.py --checkpoint checkpoints/best_model.pt --visual
+python scripts/web_server.py
 ```
 
 ### Visualisasi Web
 
 ```bash
 # Jalankan web server
-python -m src.visualization.app
+python scripts/web_server.py
 
 # Buka browser di http://localhost:5000
 ```
@@ -160,7 +163,8 @@ chess/
 ├── config/                 # File konfigurasi
 │   ├── default.yaml       # Konfigurasi default
 │   └── colab.yaml         # Konfigurasi untuk Colab
-├── src/
+├── src/                    # Source code utama
+│   ├── core/              # Domain & business logic
 │   ├── environment/       # Chess environment
 │   ├── models/            # Neural network
 │   ├── optimization/      # Adaptive optimizer
@@ -169,13 +173,22 @@ chess/
 │   ├── stability/         # Stability monitoring
 │   ├── evaluation/        # Evaluasi & Stockfish
 │   └── visualization/     # Web interface
+├── scripts/               # Entry point scripts
+│   ├── train.py           # Training script
+│   ├── train_v27.py       # Training v27 (latest)
+│   ├── evaluate.py        # Evaluation script
+│   ├── play.py            # Interactive play
+│   └── web_server.py      # Web interface server
+├── data/                  # Training data
+│   ├── supervised_data.npz
+│   └── opening_book.pkl
 ├── notebooks/             # Jupyter notebooks
 ├── tests/                 # Unit tests
 ├── checkpoints/           # Model saves
+├── deployment/            # Deployment files
 ├── logs/                  # Training logs
-├── train.py               # Training script
-├── evaluate.py            # Evaluation script
-├── play.py                # Interactive play
+├── archive/               # Legacy files (not in git)
+├── docs/                  # Documentation
 └── requirements.txt       # Dependencies
 ```
 

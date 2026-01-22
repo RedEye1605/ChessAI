@@ -1,20 +1,41 @@
-
 # Python
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+*.egg-info/
+venv/
+.venv/
 
-# Logs and Data
+# IDE
+.vscode/
+.idea/
+
+# Logs
 logs/
-experiments/
-*.npz
 *.log
 
-# Checkpoints (Exclude all by default, whitelist specific small/final models)
-checkpoints/*
-!checkpoints/chess_v27_final.pt
-!checkpoints/chess_v27_best_sf.pt
+# Large Data Files (keep locally, don't push to git)
+*.npz
+data/*.pkl
+supervised_data.npz
+opening_book.pkl
 
-# Ignore the nested deployment repo we created earlier
+# Model Checkpoints (keep locally, don't push to git)
+# Large model files that should stay local
+checkpoints/*.pt
+!checkpoints/chess_v27_final.pt
+!checkpoints/chess_lichess_v7.pt
+
+# Archive folder (legacy files - keep locally)
+archive/
+
+# Experiments
+experiments/
+
+# Deployment specific
 deployment/ChessModel/
 deployment/huggingface/model.pt
+
+# OS files
+.DS_Store
+Thumbs.db
