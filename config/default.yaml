@@ -1,0 +1,154 @@
+# =============================================================================
+# Konfigurasi Default untuk Chess RL dengan Adaptive Optimization
+# =============================================================================
+
+# Pengaturan Umum
+general:
+  seed: 42
+  device: "auto"  # auto, cuda, cpu
+  log_dir: "logs"
+  checkpoint_dir: "checkpoints"
+  experiment_name: "chess_rl_adaptive"
+
+# Konfigurasi Neural Network
+network:
+  # Dimensi input: 14 planes x 8 x 8
+  input_channels: 14
+  # Jumlah residual blocks
+  num_residual_blocks: 10
+  # Jumlah filters per layer
+  num_filters: 256
+  # Ukuran action space (semua kemungkinan move)
+  action_size: 4672
+  # Tipe normalization: layer, batch, spectral
+  normalization: "layer"
+  # Aktivasi: relu, gelu, silu
+  activation: "relu"
+  # Dropout rate
+  dropout: 0.1
+
+# Konfigurasi PPO Algorithm
+ppo:
+  # Learning rate dasar
+  learning_rate: 3.0e-4
+  # Discount factor
+  gamma: 0.99
+  # GAE lambda
+  gae_lambda: 0.95
+  # Clip range untuk PPO
+  clip_range: 0.2
+  # Value function coefficient
+  value_coef: 0.5
+  # Entropy coefficient (untuk exploration)
+  entropy_coef: 0.01
+  # Maximum gradient norm
+  max_grad_norm: 0.5
+  # Jumlah epochs per update
+  n_epochs: 4
+  # Batch size
+  batch_size: 256
+  # Mini batch size
+  mini_batch_size: 64
+  # Target KL divergence
+  target_kl: 0.01
+
+# Konfigurasi Adaptive Optimization
+adaptive_optimization:
+  # Menggunakan warmup?
+  use_warmup: true
+  # Jumlah steps warmup
+  warmup_steps: 1000
+  # Tipe LR scheduler: cosine, linear, cyclic, adaptive
+  lr_scheduler: "cosine"
+  # Minimum learning rate
+  min_lr: 1.0e-6
+  # Gradient clipping strategy: global_norm, per_param, adaptive
+  gradient_clipping: "global_norm"
+  # Adaptive clip range?
+  adaptive_clip_range: true
+  # Entropy scheduling?
+  entropy_scheduling: true
+  # Final entropy coefficient
+  final_entropy_coef: 0.001
+
+# Konfigurasi Training
+training:
+  # Total timesteps untuk training
+  total_timesteps: 1_000_000
+  # Jumlah environment parallel
+  n_envs: 8
+  # Steps per rollout
+  n_steps: 128
+  # Checkpoint setiap N updates
+  checkpoint_frequency: 100
+  # Evaluasi setiap N updates
+  eval_frequency: 50
+  # Jumlah games untuk evaluasi
+  eval_games: 20
+  # Early stopping patience
+  early_stopping_patience: 10
+  # Minimum improvement untuk early stopping
+  min_improvement: 0.01
+
+# Konfigurasi Self-Play
+self_play:
+  # Menggunakan historical opponents?
+  use_historical_opponents: true
+  # Frekuensi update opponent pool
+  opponent_update_frequency: 100
+  # Ukuran opponent pool
+  opponent_pool_size: 10
+  # Probabilitas bermain melawan diri sendiri
+  self_play_prob: 0.8
+
+# Konfigurasi Environment
+environment:
+  # Reward untuk checkmate
+  checkmate_reward: 1.0
+  # Reward untuk draw
+  draw_reward: 0.0
+  # Reward untuk illegal move (penalty)
+  illegal_move_reward: -1.0
+  # Reward shaping untuk capture
+  capture_reward_scale: 0.1
+  # Maximum moves per game
+  max_moves: 200
+  # Resign threshold (value estimate untuk resign)
+  resign_threshold: -0.95
+
+# Konfigurasi Evaluasi
+evaluation:
+  # Menggunakan Stockfish?
+  use_stockfish: true
+  # Path ke Stockfish executable
+  stockfish_path: "stockfish"
+  # Depth untuk Stockfish
+  stockfish_depth: 10
+  # Time limit per move (ms)
+  stockfish_time_limit: 100
+  # ELO rating untuk comparison
+  stockfish_elo: 1500
+
+# Konfigurasi Logging
+logging:
+  # Level logging: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+  # Log ke tensorboard?
+  tensorboard: true
+  # Log gradient statistics?
+  log_gradients: true
+  # Log parameter histograms?
+  log_histograms: false
+  # Frekuensi logging
+  log_frequency: 10
+
+# Konfigurasi Stability Monitoring
+stability:
+  # Threshold gradient norm untuk warning
+  gradient_norm_threshold: 100.0
+  # Threshold loss variance untuk warning
+  loss_variance_threshold: 1.0
+  # Minimum entropy threshold
+  min_entropy_threshold: 0.1
+  # Auto-adjust hyperparameters?
+  auto_adjust: true

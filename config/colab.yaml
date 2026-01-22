@@ -1,0 +1,96 @@
+# =============================================================================
+# Konfigurasi untuk Training di Google Colab
+# Optimized untuk GPU T4/V100/A100
+# =============================================================================
+
+# Pengaturan Umum
+general:
+  seed: 42
+  device: "cuda"  # Colab pasti pakai GPU
+  log_dir: "/content/drive/MyDrive/chess_rl/logs"
+  checkpoint_dir: "/content/drive/MyDrive/chess_rl/checkpoints"
+  experiment_name: "chess_rl_colab"
+
+# Konfigurasi Neural Network (larger untuk GPU)
+network:
+  input_channels: 14
+  num_residual_blocks: 15  # Lebih dalam untuk GPU
+  num_filters: 256
+  action_size: 4672
+  normalization: "layer"
+  activation: "relu"
+  dropout: 0.1
+
+# Konfigurasi PPO Algorithm
+ppo:
+  learning_rate: 3.0e-4
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  value_coef: 0.5
+  entropy_coef: 0.01
+  max_grad_norm: 0.5
+  n_epochs: 4
+  batch_size: 512  # Lebih besar untuk GPU
+  mini_batch_size: 128
+
+# Konfigurasi Adaptive Optimization
+adaptive_optimization:
+  use_warmup: true
+  warmup_steps: 2000
+  lr_scheduler: "cosine"
+  min_lr: 1.0e-6
+  gradient_clipping: "global_norm"
+  adaptive_clip_range: true
+  entropy_scheduling: true
+  final_entropy_coef: 0.001
+
+# Konfigurasi Training (lebih lama untuk hasil lebih baik)
+training:
+  total_timesteps: 5_000_000  # 5M steps untuk training penuh
+  n_envs: 16  # Lebih banyak parallel environments
+  n_steps: 256
+  checkpoint_frequency: 50
+  eval_frequency: 25
+  eval_games: 30
+  early_stopping_patience: 20
+  min_improvement: 0.005
+
+# Self-Play
+self_play:
+  use_historical_opponents: true
+  opponent_update_frequency: 50
+  opponent_pool_size: 15
+  self_play_prob: 0.8
+
+# Environment
+environment:
+  checkmate_reward: 1.0
+  draw_reward: 0.0
+  illegal_move_reward: -1.0
+  capture_reward_scale: 0.1
+  max_moves: 200
+  resign_threshold: -0.95
+
+# Evaluasi
+evaluation:
+  use_stockfish: true
+  stockfish_path: "/usr/games/stockfish"  # Colab path
+  stockfish_depth: 12
+  stockfish_time_limit: 200
+  stockfish_elo: 1800
+
+# Logging
+logging:
+  level: "INFO"
+  tensorboard: true
+  log_gradients: true
+  log_histograms: true  # GPU memory cukup
+  log_frequency: 5
+
+# Stability
+stability:
+  gradient_norm_threshold: 100.0
+  loss_variance_threshold: 1.0
+  min_entropy_threshold: 0.1
+  auto_adjust: true

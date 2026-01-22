@@ -1,0 +1,20 @@
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Logs and Data
+logs/
+experiments/
+*.npz
+*.log
+
+# Checkpoints (Exclude all by default, whitelist specific small/final models)
+checkpoints/*
+!checkpoints/chess_v27_final.pt
+!checkpoints/chess_v27_best_sf.pt
+
+# Ignore the nested deployment repo we created earlier
+deployment/ChessModel/
+deployment/huggingface/model.pt

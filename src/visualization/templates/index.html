@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess RL - AI Visualization</title>
+    
+    <!-- Chessboard.js CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #00d9ff, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1.1em;
+        }
+        
+        .game-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .board-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #board {
+            width: 480px;
+        }
+        
+        .info-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            min-width: 300px;
+            max-width: 350px;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #00d9ff;
+            border-bottom: 2px solid #00d9ff;
+            padding-bottom: 10px;
+        }
+        
+        .status-box {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .status-label {
+            color: #888;
+        }
+        
+        .status-value {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
+        .status-value.thinking {
+            color: #ffaa00;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #00d9ff, #00ff88);
+            color: #1a1a2e;
+            font-weight: bold;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 217, 255, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4444, #ff8888);
+            color: #fff;
+        }
+        
+        .buttons-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .move-history {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .move-history::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .move-history::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .move-history::-webkit-scrollbar-thumb {
+            background: #00d9ff;
+            border-radius: 4px;
+        }
+        
+        .ai-evaluation {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .eval-bar {
+            height: 20px;
+            background: linear-gradient(to right, #333 50%, #fff 50%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .eval-indicator {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: #00ff88;
+            left: 50%;
+            transition: left 0.3s ease;
+        }
+        
+        .game-result {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .game-result.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .game-result h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn.active {
+            border-color: #00d9ff;
+            background: rgba(0, 217, 255, 0.1);
+        }
+        
+        .mode-btn:hover {
+            background: rgba(0, 217, 255, 0.1);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 900px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            #board {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .info-section {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Chess RL dengan Adaptive Optimization</h1>
+            <p class="subtitle">Lihat AI bermain catur dengan teknik reinforcement learning</p>
+        </header>
+        
+        <div class="game-container">
+            <div class="board-section">
+                <div id="board"></div>
+                <div class="buttons-container">
+                    <button class="btn btn-primary" onclick="resetGame()">🔄 Game Baru</button>
+                    <button class="btn btn-secondary" onclick="undoMove()">⬅️ Undo</button>
+                    <button class="btn btn-secondary" onclick="flipBoard()">🔃 Flip Board</button>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h3 class="section-title">🎮 Mode Permainan</h3>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="human-vs-ai" onclick="setMode('human-vs-ai')">
+                        👤 vs 🤖<br>
+                        <small>Human vs AI</small>
+                    </button>
+                    <button class="mode-btn" data-mode="ai-vs-ai" onclick="setMode('ai-vs-ai')">
+                        🤖 vs 🤖<br>
+                        <small>AI vs AI</small>
+                    </button>
+                </div>
+                
+                <h3 class="section-title">📊 Status</h3>
+                <div class="status-box">
+                    <div class="status-item">
+                        <span class="status-label">Giliran:</span>
+                        <span class="status-value" id="turn">Putih</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Langkah:</span>
+                        <span class="status-value" id="move-count">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Status AI:</span>
+                        <span class="status-value" id="ai-status">Menunggu</span>
+                    </div>
+                </div>
+                
+                <div class="ai-evaluation">
+                    <h4>🧠 Evaluasi AI</h4>
+                    <div class="eval-bar">
+                        <div class="eval-indicator" id="eval-indicator"></div>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Nilai:</span>
+                        <span class="status-value" id="ai-value">0.00</span>
+                    </div>
+                </div>
+                
+                <h3 class="section-title" style="margin-top: 20px;">📜 Riwayat Langkah</h3>
+                <div class="move-history" id="move-history">
+                    <em>Game dimulai...</em>
+                </div>
+                
+                <div class="game-result" id="game-result">
+                    <h2 id="result-text">Game Selesai!</h2>
+                    <p id="result-detail"></p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Chess RL dengan Adaptive Optimization | Dibuat dengan ❤️ menggunakan Reinforcement Learning</p>
+        </footer>
+    </div>
+    
+    <!-- jQuery (required for chessboard.js) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Chessboard.js -->
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    
+    <!-- Chess.js for move validation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <script>
+        // Game state
+        let board = null;
+        let game = new Chess();
+        let socket = null;
+        let gameMode = 'human-vs-ai';
+        let playerColor = 'white';
+        let moveHistory = [];
+        
+        // Initialize
+        $(document).ready(function() {
+            initBoard();
+            initSocket();
+        });
+        
+        function initBoard() {
+            const config = {
+                draggable: true,
+                position: 'start',
+                onDragStart: onDragStart,
+                onDrop: onDrop,
+                onSnapEnd: onSnapEnd,
+                pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            };
+            
+            board = Chessboard('board', config);
+            $(window).resize(board.resize);
+        }
+        
+        function initSocket() {
+            socket = io();
+            
+            socket.on('connect', function() {
+                console.log('Connected to server');
+            });
+            
+            socket.on('ai_thinking', function(data) {
+                updateAIStatus(data.status ? 'Berpikir...' : 'Menunggu');
+            });
+            
+            socket.on('ai_move', function(data) {
+                makeAIMove(data);
+            });
+            
+            socket.on('error', function(data) {
+                console.error('Error:', data.message);
+                updateAIStatus('Error');
+            });
+        }
+        
+        function onDragStart(source, piece, position, orientation) {
+            // Don't allow moves if game is over
+            if (game.game_over()) return false;
+            
+            // Only pick up pieces for your color
+            if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+            
+            // In human vs AI mode, only allow moving your color
+            if (gameMode === 'human-vs-ai') {
+                if ((playerColor === 'white' && game.turn() === 'b') ||
+                    (playerColor === 'black' && game.turn() === 'w')) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        function onDrop(source, target) {
+            // Try to make the move
+            const move = game.move({
+                from: source,
+                to: target,
+                promotion: 'q' // Always promote to queen
+            });
+            
+            // If illegal move, snap back
+            if (move === null) return 'snapback';
+            
+            // Update UI
+            updateStatus();
+            addMoveToHistory(move.san);
+            
+            // Send move to server
+            sendMoveToServer(source + target);
+            
+            // Check if AI should move
+            if (gameMode === 'human-vs-ai' && !game.game_over()) {
+                setTimeout(requestAIMove, 500);
+            }
+        }
+        
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+        
+        function sendMoveToServer(moveUci) {
+            fetch('/api/move', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({move: moveUci})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.game_over) {
+                    showGameResult(data.result);
+                }
+            });
+        }
+        
+        function requestAIMove() {
+            updateAIStatus('Berpikir...');
+            
+            fetch('/api/ai_move', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Make the move on local board
+                    const from = data.move.substring(0, 2);
+                    const to = data.move.substring(2, 4);
+                    const promotion = data.move.length > 4 ? data.move[4] : undefined;
+                    
+                    const move = game.move({
+                        from: from,
+                        to: to,
+                        promotion: promotion
+                    });
+                    
+                    board.position(game.fen());
+                    updateStatus();
+                    addMoveToHistory(move ? move.san : data.move);
+                    
+                    // Update evaluation
+                    updateEvaluation(data.value);
+                    
+                    if (data.game_over) {
+                        showGameResult(data.result);
+                    }
+                }
+                updateAIStatus('Menunggu');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateAIStatus('Error');
+            });
+        }
+        
+        function makeAIMove(data) {
+            const from = data.move.substring(0, 2);
+            const to = data.move.substring(2, 4);
+            
+            const move = game.move({
+                from: from,
+                to: to,
+                promotion: 'q'
+            });
+            
+            board.position(game.fen());
+            updateStatus();
+            addMoveToHistory(move ? move.san : data.move);
+            updateEvaluation(data.value);
+            
+            if (data.game_over) {
+                showGameResult(null);
+            }
+        }
+        
+        function updateStatus() {
+            const turn = game.turn() === 'w' ? 'Putih' : 'Hitam';
+            document.getElementById('turn').textContent = turn;
+            document.getElementById('move-count').textContent = Math.floor(game.history().length / 2) + 1;
+            
+            if (game.in_check()) {
+                document.getElementById('turn').textContent = turn + ' (Skak!)';
+            }
+        }
+        
+        function updateAIStatus(status) {
+            const elem = document.getElementById('ai-status');
+            elem.textContent = status;
+            elem.className = status === 'Berpikir...' ? 'status-value thinking' : 'status-value';
+        }
+        
+        function updateEvaluation(value) {
+            document.getElementById('ai-value').textContent = value.toFixed(2);
+            
+            // Update evaluation bar (value is -1 to 1)
+            const percentage = (value + 1) / 2 * 100;
+            document.getElementById('eval-indicator').style.left = percentage + '%';
+        }
+        
+        function addMoveToHistory(move) {
+            moveHistory.push(move);
+            
+            let html = '';
+            for (let i = 0; i < moveHistory.length; i += 2) {
+                const moveNum = Math.floor(i / 2) + 1;
+                html += `${moveNum}. ${moveHistory[i]}`;
+                if (moveHistory[i + 1]) {
+                    html += ` ${moveHistory[i + 1]}`;
+                }
+                html += '<br>';
+            }
+            
+            document.getElementById('move-history').innerHTML = html;
+        }
+        
+        function showGameResult(result) {
+            let text = '';
+            let detail = '';
+            
+            if (game.in_checkmate()) {
+                const winner = game.turn() === 'w' ? 'Hitam' : 'Putih';
+                text = '🏆 Checkmate!';
+                detail = winner + ' menang!';
+            } else if (game.in_stalemate()) {
+                text = '🤝 Stalemate';
+                detail = 'Permainan berakhir seri';
+            } else if (game.in_draw()) {
+                text = '🤝 Seri';
+                detail = 'Permainan berakhir seri';
+            } else {
+                text = '🎮 Game Selesai';
+                detail = result || '';
+            }
+            
+            document.getElementById('result-text').textContent = text;
+            document.getElementById('result-detail').textContent = detail;
+            document.getElementById('game-result').classList.add('show');
+        }
+        
+        function resetGame() {
+            game.reset();
+            board.start();
+            moveHistory = [];
+            document.getElementById('move-history').innerHTML = '<em>Game dimulai...</em>';
+            document.getElementById('game-result').classList.remove('show');
+            document.getElementById('ai-value').textContent = '0.00';
+            document.getElementById('eval-indicator').style.left = '50%';
+            updateStatus();
+            
+            fetch('/api/reset', {method: 'POST'});
+        }
+        
+        function undoMove() {
+            game.undo();
+            game.undo(); // Undo both player and AI move
+            board.position(game.fen());
+            moveHistory = game.history();
+            updateStatus();
+        }
+        
+        function flipBoard() {
+            board.flip();
+        }
+        
+        function setMode(mode) {
+            gameMode = mode;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            
+            resetGame();
+            
+            if (mode === 'ai-vs-ai') {
+                runAIvsAI();
+            }
+        }
+        
+        function runAIvsAI() {
+            fetch('/api/ai_vs_ai', {method: 'POST'})
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        animateAIGame(data.moves, 0);
+                    }
+                });
+        }
+        
+        function animateAIGame(moves, index) {
+            if (index >= moves.length) {
+                showGameResult(null);
+                return;
+            }
+            
+            const moveData = moves[index];
+            const from = moveData.move.substring(0, 2);
+            const to = moveData.move.substring(2, 4);
+            
+            const move = game.move({
+                from: from,
+                to: to,
+                promotion: 'q'
+            });
+            
+            board.position(game.fen());
+            updateStatus();
+            addMoveToHistory(move ? move.san : moveData.move);
+            
+            setTimeout(() => animateAIGame(moves, index + 1), 500);
+        }
+    </script>
+</body>
+</html>
