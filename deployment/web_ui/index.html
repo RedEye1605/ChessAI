@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chess AI v27 - Neural Nebula</title>
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -207,6 +207,30 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+            touch-action: none;
+            /* Prevent scroll while touching board */
+        }
+
+        /* Highlight selected square for click-to-move */
+        .highlight-square {
+            box-shadow: inset 0 0 0 4px var(--primary) !important;
+            background: rgba(129, 140, 248, 0.3) !important;
+        }
+
+        .highlight-hint {
+            position: relative;
+        }
+
+        .highlight-hint::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 30%;
+            height: 30%;
+            background: rgba(129, 140, 248, 0.6);
+            border-radius: 50%;
         }
 
         /* Sidebar Control Panel */
@@ -567,6 +591,100 @@
                 max-width: 480px;
             }
         }
+
+        /* Mobile - Small screens */
+        @media (max-width: 520px) {
+            .main-container {
+                padding: 15px 10px;
+                gap: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 15px 0;
+            }
+
+            .brand-title h1 {
+                font-size: 1.3rem;
+            }
+
+            .board-container {
+                padding: 5px;
+                width: calc(100vw - 20px);
+                max-width: 400px;
+            }
+
+            #board {
+                width: calc(100vw - 30px) !important;
+                height: calc(100vw - 30px) !important;
+                max-width: 390px !important;
+                max-height: 390px !important;
+            }
+
+            .control-panel {
+                width: 100%;
+                max-width: calc(100vw - 20px);
+            }
+
+            .glass-card {
+                padding: 16px;
+            }
+
+            .section-header {
+                font-size: 0.75rem;
+                margin-bottom: 12px;
+            }
+
+            .mode-btn {
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+
+            .stats-grid {
+                gap: 8px;
+            }
+
+            .stat-box {
+                padding: 10px 12px;
+            }
+
+            .stat-value {
+                font-size: 0.95rem;
+            }
+
+            .btn {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+
+            .actions {
+                gap: 8px;
+            }
+
+            .move-history {
+                max-height: 100px;
+            }
+
+            /* Mobile hint */
+            .mobile-hint {
+                display: block;
+                text-align: center;
+                padding: 8px;
+                background: rgba(129, 140, 248, 0.1);
+                border: 1px solid rgba(129, 140, 248, 0.3);
+                border-radius: 8px;
+                font-size: 0.75rem;
+                color: var(--primary);
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (min-width: 521px) {
+            .mobile-hint {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -626,6 +744,11 @@
                             <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
                         </svg>
                         Game Status
+                    </div>
+
+                    <!-- Mobile hint for tap-to-move -->
+                    <div class="mobile-hint" id="mobileHint">
+                        📱 Tap a piece, then tap destination to move
                     </div>
 
                     <div class="mode-toggle">
@@ -759,6 +882,7 @@
         let mode = 'human';
         let isRunning = false;
         let moves = [];
+        let selectedSquare = null; // For click-to-move
 
         const config = {
             animation: {
@@ -768,6 +892,9 @@
                 appearSpeed: 400
             }
         };
+
+        // Check if mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 520;
 
         // --- Board Initialization ---
         function onDragStart(source, piece) {
@@ -779,6 +906,7 @@
         }
 
         function onDrop(source, target) {
+            clearHighlights();
             let move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
 
@@ -797,8 +925,73 @@
             board.position(game.fen());
         }
 
+        // Click-to-move for mobile
+        function onSquareClick(square) {
+            if (mode !== 'human' || game.game_over()) return;
+
+            const piece = game.get(square);
+
+            // If clicking on a piece of the current player
+            if (piece &&
+                ((game.turn() === 'w' && piece.color === 'w') ||
+                    (game.turn() === 'b' && piece.color === 'b'))) {
+
+                // Select this piece
+                clearHighlights();
+                selectedSquare = square;
+                highlightSquare(square);
+                highlightLegalMoves(square);
+                return;
+            }
+
+            // If a piece is already selected, try to move
+            if (selectedSquare) {
+                const move = game.move({
+                    from: selectedSquare,
+                    to: square,
+                    promotion: 'q'
+                });
+
+                clearHighlights();
+
+                if (move) {
+                    board.position(game.fen());
+                    moves.push(move.san);
+                    updateStatus();
+                    selectedSquare = null;
+
+                    // Trigger AI
+                    if (!game.game_over() && mode === 'human') {
+                        setTimeout(() => requestAIMove('black'), 200);
+                    } else if (game.game_over()) {
+                        handleGameOver(game.in_checkmate() ? (game.turn() === 'w' ? '0-1' : '1-0') : '1/2-1/2');
+                    }
+                } else {
+                    // Invalid move, deselect
+                    selectedSquare = null;
+                }
+            }
+        }
+
+        function highlightSquare(square) {
+            const $square = $('#board .square-' + square);
+            $square.addClass('highlight-square');
+        }
+
+        function highlightLegalMoves(square) {
+            const moves = game.moves({ square: square, verbose: true });
+            moves.forEach(move => {
+                const $square = $('#board .square-' + move.to);
+                $square.addClass('highlight-hint');
+            });
+        }
+
+        function clearHighlights() {
+            $('#board .square-55d63').removeClass('highlight-square highlight-hint');
+        }
+
         board = Chessboard('board', {
-            draggable: true,
+            draggable: !isMobile, // Disable drag on mobile
             position: 'start',
             onDragStart: onDragStart,
             onDrop: onDrop,
@@ -808,6 +1001,14 @@
             snapbackSpeed: config.animation.snapbackSpeed,
             snapSpeed: config.animation.snapSpeed,
             appearSpeed: config.animation.appearSpeed,
+        });
+
+        // Add click handler for squares
+        $('#board').on('click', '.square-55d63', function () {
+            const square = $(this).attr('data-square');
+            if (square) {
+                onSquareClick(square);
+            }
         });
 
         $(window).resize(() => board.resize());
@@ -837,6 +1038,8 @@
             isRunning = false;
             game.reset();
             moves = [];
+            selectedSquare = null;
+            clearHighlights();
             board.position('start', true);
             document.getElementById('resultBanner').style.display = 'none';
             document.getElementById('moveList').innerHTML = '';
